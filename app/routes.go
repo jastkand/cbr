@@ -21,7 +21,13 @@ func renderError(w http.ResponseWriter, err string) {
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
-	daily, err := cbr.Daily(time.Now())
+	query := r.URL.Query()
+	dateStr := query.Get("date")
+	date, err := time.Parse("2006/01/02", dateStr)
+	if err != nil {
+		date = time.Now()
+	}
+	daily, err := cbr.Daily(date)
 	if err != nil {
 		renderError(w, err.Error())
 		return
