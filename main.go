@@ -2,6 +2,7 @@ package main
 
 import (
 	"cbr/app"
+	"cbr/config"
 	"context"
 	"fmt"
 	"log"
@@ -58,10 +59,8 @@ type controller struct {
 }
 
 func main() {
-	listenAddr := ":5001"
-	if len(os.Args) == 2 {
-		listenAddr = os.Args[1]
-	}
+	config.Load()
+	listenAddr := ":" + config.Port
 
 	logger := log.New(os.Stdout, "http: ", log.LstdFlags)
 	logger.Printf("Server is starting...")
