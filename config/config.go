@@ -8,7 +8,7 @@ var Port string
 
 func Load() {
 	Port = os.Getenv("PORT")
-	if "" == Port {
+	if Port == "" {
 		Port = "5000"
 	}
 }
