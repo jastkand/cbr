@@ -5,7 +5,7 @@ import (
 	"cbr/config"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -53,7 +53,7 @@ func (c *controller) shutdown(ctx context.Context, server *http.Server) context.
 }
 
 type controller struct {
-	logger        *log.Logger
+	logger        *slog.Logger
 	nextRequestID func() string
 	healthy       int64
 }
@@ -62,32 +62,35 @@ func main() {
 	config.Load()
 	listenAddr := ":" + config.Port
 
-	logger := log.New(os.Stdout, "http: ", log.LstdFlags)
-	logger.Printf("Server is starting...")
+	loggerOpts := &slog.HandlerOptions{Level: slog.LevelInfo}
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, loggerOpts))
+	slog.SetDefault(logger)
+
+	logger.Info("Server is starting...")
 
 	c := &controller{logger: logger, nextRequestID: func() string { return strconv.FormatInt(time.Now().UnixNano(), 36) }}
 	router := http.NewServeMux()
 	router.HandleFunc("/healthz", c.healthz)
-	app.Mount(router)
+
+	app.NewApp(logger).Mount(router)
 
 	server := &http.Server{
 		Addr:         listenAddr,
 		Handler:      (middlewares{c.tracing, c.logging}).apply(router),
-		ErrorLog:     logger,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  15 * time.Second,
 	}
 	ctx := c.shutdown(context.Background(), server)
 
-	logger.Printf("Server is ready to handle requests at %q\n", listenAddr)
+	logger.Info(fmt.Sprintf("Server is ready to handle requests at %s", listenAddr))
 	atomic.StoreInt64(&c.healthy, time.Now().UnixNano())
 
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
-		logger.Fatalf("Could not listen on %q: %s\n", listenAddr, err)
+		logger.Error(fmt.Sprintf("Could not listen on %q", listenAddr), slog.String("error", err.Error()))
 	}
 	<-ctx.Done()
-	logger.Printf("Server stopped\n")
+	logger.Info("Server stopped")
 }
 
 func (c *controller) healthz(w http.ResponseWriter, req *http.Request) {
@@ -105,7 +108,13 @@ func (c *controller) logging(hdlr http.Handler) http.Handler {
 			if requestID == "" {
 				requestID = "unknown"
 			}
-			c.logger.Println(requestID, req.Method, req.URL.Path, req.RemoteAddr, req.UserAgent(), time.Since(start))
+			c.logger.Info(fmt.Sprintf("%s %s", req.Method, req.URL.Path),
+				slog.String("request_id", requestID),
+				slog.String("method", req.Method),
+				slog.String("path", req.URL.Path),
+				slog.String("user_agent", req.UserAgent()),
+				slog.String("duration", time.Since(start).String()),
+			)
 		}(time.Now())
 		hdlr.ServeHTTP(w, req)
 	})

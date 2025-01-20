@@ -3,24 +3,34 @@ package app
 import (
 	"cbr/cbr"
 	"cbr/renderer"
+	"log/slog"
 	"net/http"
 	"time"
 )
 
-func Mount(router *http.ServeMux) {
-	router.HandleFunc("/", Index)
+type App struct {
+	logger *slog.Logger
+}
+
+func NewApp(logger *slog.Logger) *App {
+	return &App{logger: logger}
+}
+
+func (app *App) Mount(router *http.ServeMux) {
+	router.HandleFunc("/", app.Index)
 }
 
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func renderError(w http.ResponseWriter, err string) {
+func (app *App) renderError(w http.ResponseWriter, err string) {
+	app.logger.Error(err)
 	resp := ErrorResponse{Error: err}
 	renderer.JSON(w, http.StatusUnprocessableEntity, resp)
 }
 
-func Index(w http.ResponseWriter, r *http.Request) {
+func (app *App) Index(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	dateStr := query.Get("date")
 	date, err := time.Parse("2006/01/02", dateStr)
@@ -29,7 +39,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	}
 	daily, err := cbr.Daily(date)
 	if err != nil {
-		renderError(w, err.Error())
+		app.renderError(w, err.Error())
 		return
 	}
 
