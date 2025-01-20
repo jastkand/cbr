@@ -38,14 +38,14 @@ func (c *controller) shutdown(ctx context.Context, server *http.Server) context.
 		close(quit)
 
 		atomic.StoreInt64(&c.healthy, 0)
-		server.ErrorLog.Printf("Server is shutting down...\n")
+		c.logger.Info("Server is shutting down...")
 
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
 		server.SetKeepAlivesEnabled(false)
 		if err := server.Shutdown(ctx); err != nil {
-			server.ErrorLog.Fatalf("Could not gracefully shutdown the server: %s\n", err)
+			c.logger.Error("Could not gracefully shutdown the server", slog.String("error", err.Error()))
 		}
 	}()
 
