@@ -7,7 +7,17 @@ import (
 	"time"
 )
 
-func Daily(date time.Time) (*DailyResponse, error) {
+const fakeUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+
+type Client struct {
+	httpClient *http.Client
+}
+
+func NewClient(httpClient *http.Client) *Client {
+	return &Client{httpClient: httpClient}
+}
+
+func (c *Client) Daily(date time.Time) (*DailyResponse, error) {
 	url := fmt.Sprintf("https://www.cbr.ru/scripts/XML_daily.asp?date_req=%s", date.Format("02/01/2006"))
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -15,9 +25,9 @@ func Daily(date time.Time) (*DailyResponse, error) {
 		return nil, err
 	}
 
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36")
+	req.Header.Set("User-Agent", fakeUserAgent)
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

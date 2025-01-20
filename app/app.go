@@ -9,11 +9,17 @@ import (
 )
 
 type App struct {
-	logger *slog.Logger
+	logger     *slog.Logger
+	httpClient *http.Client
+	cbr        *cbr.Client
 }
 
 func NewApp(logger *slog.Logger) *App {
-	return &App{logger: logger}
+	return &App{
+		logger:     logger,
+		httpClient: http.DefaultClient,
+		cbr:        cbr.NewClient(http.DefaultClient),
+	}
 }
 
 func (app *App) Mount(router *http.ServeMux) {
@@ -25,7 +31,6 @@ type ErrorResponse struct {
 }
 
 func (app *App) renderError(w http.ResponseWriter, err string) {
-	app.logger.Error(err)
 	resp := ErrorResponse{Error: err}
 	renderer.JSON(w, http.StatusUnprocessableEntity, resp)
 }
@@ -37,9 +42,10 @@ func (app *App) Index(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		date = time.Now()
 	}
-	daily, err := cbr.Daily(date)
+	daily, err := app.cbr.Daily(date)
 	if err != nil {
-		app.renderError(w, err.Error())
+		app.logger.Error("Could not get daily response", slog.String("error", err.Error()))
+		app.renderError(w, "Could not get daily response")
 		return
 	}
 
