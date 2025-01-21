@@ -40,6 +40,7 @@ func (app *App) Index(w http.ResponseWriter, r *http.Request) {
 	dateStr := query.Get("date")
 	date, err := time.Parse("2006/01/02", dateStr)
 	if err != nil {
+		app.logger.Error("Could not parse date", slog.String("error", err.Error()))
 		date = time.Now()
 	}
 	daily, err := app.cbr.Daily(date)

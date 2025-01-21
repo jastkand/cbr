@@ -60,7 +60,7 @@ type controller struct {
 
 func main() {
 	config.Load()
-	listenAddr := ":" + config.Port
+	listenAddr := "127.0.0.1:" + config.Port
 
 	loggerOpts := &slog.HandlerOptions{Level: slog.LevelInfo}
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, loggerOpts))
@@ -110,8 +110,6 @@ func (c *controller) logging(hdlr http.Handler) http.Handler {
 			}
 			c.logger.Info(fmt.Sprintf("%s %s", req.Method, req.URL.Path),
 				slog.String("request_id", requestID),
-				slog.String("method", req.Method),
-				slog.String("path", req.URL.Path),
 				slog.String("user_agent", req.UserAgent()),
 				slog.String("duration", time.Since(start).String()),
 			)
