@@ -118,11 +118,15 @@ func (c *controller) logging(hdlr http.Handler) http.Handler {
 	})
 }
 
+const maxRequestIDLen = 64
+
 func (c *controller) tracing(hdlr http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		requestID := req.Header.Get("X-Request-Id")
 		if requestID == "" {
 			requestID = c.nextRequestID()
+		} else if len(requestID) > maxRequestIDLen {
+			requestID = requestID[:maxRequestIDLen]
 		}
 		w.Header().Set("X-Request-Id", requestID)
 		hdlr.ServeHTTP(w, req)
