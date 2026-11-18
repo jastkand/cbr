@@ -2,6 +2,8 @@
 
 The original API uses XML format. This service proxies requests to original API and returns JSON.
 
+A public instance is running at https://cbr.krivko.me — pass a date with `?date=2026/01/02`, otherwise today's rates are returned.
+
 ## Deploy
 
 ### Install `supervisor`
