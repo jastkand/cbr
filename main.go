@@ -76,7 +76,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:         listenAddr,
-		Handler:      (middlewares{c.tracing, c.logging}).apply(router),
+		Handler:      (middlewares{c.tracing, app.RateLimit(), c.logging}).apply(router),
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  15 * time.Second,
