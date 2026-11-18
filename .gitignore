@@ -22,3 +22,6 @@ go.work
 
 dist/
 .env.deploy
+
+# macOS
+.DS_Store
