@@ -15,10 +15,11 @@ type App struct {
 }
 
 func NewApp(logger *slog.Logger) *App {
+	httpClient := &http.Client{Timeout: 10 * time.Second}
 	return &App{
 		logger:     logger,
-		httpClient: http.DefaultClient,
-		cbr:        cbr.NewClient(http.DefaultClient),
+		httpClient: httpClient,
+		cbr:        cbr.NewClient(httpClient),
 	}
 }
 
