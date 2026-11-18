@@ -24,7 +24,7 @@ func NewApp(logger *slog.Logger) *App {
 }
 
 func (app *App) Mount(router *http.ServeMux) {
-	router.HandleFunc("/", app.Index)
+	router.HandleFunc("GET /{$}", app.Index)
 }
 
 type ErrorResponse struct {
